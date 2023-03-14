@@ -1,0 +1,13 @@
+{
+  "Template Size" : 1000,
+  "SNP Count Range" :
+  {
+    "Start" : 20,
+    "End" :  20
+  },
+  "Average Depth" : 4,
+  "Read Size" : 100,
+  "Insert Size" : 325
+}
+
+
