@@ -1,10 +1,11 @@
 """
-This is the Technical tools python library created for general purpose shit
+This is the Technical tools python library created for general purpose stuff
 just so you know I have no idea what half of this means so don't ask
 """
 
 from inspect import currentframe, getframeinfo
 from random import randint, choice
+import os
 
 
 def log(logtype, message, var=None):
@@ -15,17 +16,24 @@ def log(logtype, message, var=None):
     :param logtype:
     """
     linenumber = currentframe().f_back.f_lineno
-    filename = getframeinfo(currentframe().f_back).filename.split('/')[-1]
-    if logtype == 'info':
-        print(f'\033[1;34m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m')
-    elif logtype == 'debug':
-        print(f'\033[1;35m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m')
-    elif logtype == 'error':
-        print(f'\033[0;31m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m')
-    elif logtype == 'critical':
-        print(f'\033[1;31m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m')
+    if os.name == 'nt':
+        filename = getframeinfo(currentframe().f_back).filename.split('\\')[-1]
     else:
-        print(f'\033[32m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m')
+        filename = getframeinfo(currentframe().f_back).filename.split('/')[-1]
+    if logtype == 'info':
+        print_message = f'\033[1;34m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m'
+    elif logtype == 'debug':
+        print_message = f'\033[1;35m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m'
+    elif logtype == 'error':
+        print_message = f'\033[0;31m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m'
+    elif logtype == 'critical':
+        print_message = f'\033[1;31m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m'
+    else:
+        print_message = f'\033[32m[{logtype.upper()}] in {filename} at line {linenumber} - {message} |{var}|\033[0m'
+    if var is None:
+        print(print_message[:-10])
+    else:
+        print(print_message)
 
 
 def time_convert(seconds):
@@ -104,7 +112,7 @@ def time_convert(seconds):
 def color_gen(style='rgb'):
     """ Makes a random color depending on style """
     color_names = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'cyan', 'black',
-                   'white', 'magenta', 'yellow', 'aqua', 'purple', 'pink']
+                   'magenta', 'yellow', 'aqua', 'purple', 'pink']
     if style == 'rgb' or style == 'RGB':
         return [randint(0, 255), randint(0, 255), randint(0, 255)]
     elif style == 'hex':
