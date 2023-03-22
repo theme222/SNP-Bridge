@@ -42,17 +42,17 @@ def sequenceAligner(seq1, seq2):  # AI Code lol
         middle_line_parts = alignment_lines[i + 1].split()
         query_line = alignment_lines[i + 2]
 
-    # Remove extraneous text from target and query lines
-    target_line_parts = target_line.split()
-    target_seq += target_line_parts[-1]
-    target_seq = target_seq.replace("-", "X")
-    query_line_parts = query_line.split()
-    query_seq += query_line_parts[-1]
-    query_seq = query_seq.replace("-", "X")
+        # Remove extraneous text from target and query lines
+        target_line_parts = target_line.split()
+        target_seq += target_line_parts[-1]
+        target_seq = target_seq.replace("-", "X")
+        query_line_parts = query_line.split()
+        query_seq += query_line_parts[-1]
+        query_seq = query_seq.replace("-", "X")
 
-    # Remove extraneous text from middle line
-    middle_line += ' ' * (len(target_line_parts[0]) - len(middle_line_parts[0]))
-    middle_line += middle_line_parts[-1]
+        # Remove extraneous text from middle line
+        middle_line += ' ' * (len(target_line_parts[0]) - len(middle_line_parts[0]))
+        middle_line += middle_line_parts[-1]
 
     return [target_seq, middle_line, query_seq]
 
