@@ -21,3 +21,6 @@ you can change settings in **config.json** only the config file in the specific 
 
 ## FastQ Simulator
 **FastQMaker.py** uses *FastABase.fasta* as base and creates mock fastq file for continuation in BWA for SAM files to continue on next header, outputs *output.fastq*
+
+## Sam Bridger
+**SamSplicer.py** uses *SamFile.sam* as information of the reads and the position on reference file *ReferenceFile.fasta* to bridge the reads, this is the latest version and should be used for all real world information
