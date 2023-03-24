@@ -26,4 +26,4 @@ you can change settings in **config.json** only the config file in the specific 
 **SamSplicer.py** uses *SamFile.sam* as information of the reads and the position on reference file *ReferenceFile.fasta* to bridge the reads, this is the latest version and should be used for all real world information
 
 ## PhasePipeline 
-**Start.py** using files set in *config.json* to change filetypes through bwa and outputs the final result use this if you are looking for direct from the sequencer information
+**Start.py** using files set in *config.json* to change filetypes through bwa and outputs the final result use this if you are looking for direct from the sequencer information read *README.md* in the directory for more info
