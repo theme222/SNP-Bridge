@@ -1,9 +1,6 @@
-import numpy as np
-from random import randint, choice, shuffle
 import matplotlib.pyplot as plt
-from TechnicalTools import log, time_convert, multi_delete, color_gen
 from time import time
-from SamReader import *
+from helperfile import *
 import json
 
 
@@ -162,7 +159,7 @@ def drill_down(chonky_list):
     return return_list
 
 
-def fasta_writer(groups, samfile, ref):
+def fasta_writer(groups, samfile, ref,fn):
     list_txt = []
     for group in groups:
         text = group[0].read_with_ins
@@ -170,7 +167,7 @@ def fasta_writer(groups, samfile, ref):
         for read in group[1:]:
             text = text[:read.start_pos - starter] + read.read_with_ins
         list_txt.append([text,starter])
-    with open("final_output.fasta", 'w') as fasta_file:
+    with open(fn, 'w') as fasta_file:
         for index, txt in enumerate(list_txt):
             fasta_file.write(f">SamSplicer.py-{index} Phase output from bridging with {samfile} using reference {ref}"
                              + f" length {len(txt[0])} start-pos {txt[1]} \n")
@@ -181,7 +178,7 @@ def main():
     with open("config.json") as json_data:
         configs = json.load(json_data)
     timer = time()
-    blended_reads, reference = sam_reader(configs["Input Sam File"], configs["Reference File"])
+    blended_reads, reference = sam_reader("bwa-output.sam", configs["Reference Filename"])
     DNA.snp_purger(blended_reads)
     bridge_output = bridge_strands(blended_reads, DNA.global_snp)
     print(bridge_output)
@@ -191,7 +188,7 @@ def main():
     if input("Show graph? [y/n] : ") == 'y':
         display_simulation(len(reference), bridge_output)
     if input("Write to fasta? [y/n] : ") == 'y':
-        fasta_writer(bridge_output, configs["Input Sam File"], configs["Reference File"])
+        fasta_writer(bridge_output, "bwa-output.sam", configs["Reference Filename"],configs['Output Filename'])
 
 
 if __name__ == '__main__':

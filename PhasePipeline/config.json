@@ -1,0 +1,5 @@
+{
+  "Input Filename" : "input.fastq",
+  "Reference Filename" : "ref.fasta",
+  "Output Filename" : "output.fasta"
+}
