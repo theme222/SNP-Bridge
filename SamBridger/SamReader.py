@@ -189,7 +189,8 @@ class DNA:
         forwardSNP = [SNP(i.global_start_pos, local_start_pos=i.global_start_pos - index) for i in obj.global_snp
                       if index < i.global_start_pos < index + read_size]
 
-        reverseSNP = [SNP(i.global_start_pos, local_start_pos=i.global_start_pos - index - insert_size + read_size) for i in
+        reverseSNP = [SNP(i.global_start_pos, local_start_pos=i.global_start_pos - index - insert_size + read_size) for
+                      i in
                       obj.global_snp
                       if index + insert_size - read_size < i.global_start_pos < index + insert_size]
 
@@ -208,8 +209,8 @@ class DNA:
         final_snp_list = []
         for index, snp in enumerate(cls.global_snp):
             for read in read_list:
-                 if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size-1:
-                    snp_values.append(read.read[snp.global_start_pos-read.start_pos])
+                if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size - 1:
+                    snp_values.append(read.read[snp.global_start_pos - read.start_pos])
 
             # Combine all words together
             chars = "".join(snp_values)
@@ -218,11 +219,13 @@ class DNA:
             # Get frequency and put in list
             total_occ = [(char, occ) for char, occ in counter.most_common()]
             if len(total_occ) == 2:  # only include a snp when it has two values
-                if total_occ[1][1] / total_occ[0][1]  > 0.6:
+                if total_occ[1][1] / total_occ[0][1] > 0.4:
                     final_snp_list.append(snp)
             snp_values = []
 
         cls.global_snp = final_snp_list
+        cls.global_snp.sort(key=SNP.key)
+        log('critical', cls.global_snp)
 
     @staticmethod
     def blend(strand, avg_depth, read_size, insert_size):  # Makes multiple inserts
@@ -255,7 +258,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
     # return variables
     snp_compare_list = []
     snp_list = []
-    mod_sam_list = []
+    mod_sam_list = np.array([], dtype=object)
 
     genewithposlist = []  # a list of lists with [sequence, starting position]
     if len(sam_list) == len(sam_start_pos):
@@ -270,7 +273,6 @@ def sam_aligner(reference, sam_list, sam_start_pos):
         seq1 = reference[start_pos:start_pos + len(sam_seq) + 20]
 
         seq2 = sam_seq  # sam sequence
-
 
         # =========== AI code incoming ===========
         # Create a PairwiseAligner instance
@@ -339,16 +341,16 @@ def sam_aligner(reference, sam_list, sam_start_pos):
             if ref[i] != read[i]:
                 print(ref[i], read[i])
                 snp_list.append(SNP(i + start_pos, i))
-                if not (i+start_pos in snp_compare_list):
+                if not (i + start_pos in snp_compare_list):
                     DNA.global_snp.append(SNP(i + start_pos))
-                    snp_compare_list.append(i+start_pos)
+                    snp_compare_list.append(i + start_pos)
         print(len(read))
         # changing to DNA class
         read = np.array(list(read))
         print(len(read))
 
         final_sam = DNA(read, snp_list, start_pos, insertions, indexes)
-        mod_sam_list.append(final_sam)
+        mod_sam_list = np.append(mod_sam_list, final_sam)
 
         snp_list = []
 
@@ -375,18 +377,31 @@ def sam_reader(filename, referencefilename):
         if not sam.cigartuples[0][0] > 2 or sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos)
             reads.append(sam.seq)
+        elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:
+            index_pos.append(sam.pos)
+            read = sam.seq
+            read = read[sam.cigartuples[0][1]:]
+            reads.append(read)
+        elif not sam.cigartuples[0][0] > 2 and sam.cigartuples[-1][0] > 2:
+            index_pos.append(sam.pos)
+            read = sam.seq
+            read = read[:sam.cigartuples[-1][1] * -1]
+            reads.append(read)
+        else:
+            index_pos.append(sam.pos)
+            read = sam.seq
+            read = read[sam.cigartuples[0][1]:sam.cigartuples[-1][1] * -1]
+            reads.append(read)
 
     new_reads = sam_aligner(reference.seq, reads, index_pos)
 
-    return index_pos, new_reads
+    return new_reads
 
 
 def main():
-    a, b = sam_reader("SamFile.sam", "ReferenceFile.fasta")
-    print(a)
-    print(b)
-    DNA.snp_purger(b)
-    log("debug",DNA.global_snp)
+    new_reads = sam_reader("SamFile.sam", "ReferenceFile.fasta")
+    DNA.snp_purger(new_reads)
+    log("debug", DNA.global_snp)
 
 
 if __name__ == '__main__':
