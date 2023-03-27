@@ -1,7 +1,7 @@
 # DNA read simulation and bridging
 
 ## Configurations
-you can change settings in **config.json** only the config file in the specific directory would determin the settings for the main python file 
+you can change settings in **config.json** only the config file in the specific directory would determine the settings for the main python file 
 ### Definitions
 * Template size : the size of the fuly constructed read
 * SNP Count : the amount of SNPs in the read that are generated
