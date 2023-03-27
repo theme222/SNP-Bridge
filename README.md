@@ -36,7 +36,7 @@ I will be describing the inner workings of the Phase Pipeline as it is the most 
    * the script will run shell commands through `os.system`
    * it will index the reference with the command `bwa index` 
    * the script will run `bwa mem` to align the fastq file to the reference
-   * bwa will produce a *bwa-output.sam* file which will get deleted in the future
+   * BWA will produce a *bwa-output.sam* file which will get deleted in the future
 2. The script will use `pysam` to read the newly created sam file
 3. Using the reference file it will detect if the sam read has a "CIGAR string" and will clip away all information that bwa deems to be hard clips or soft clips as they are not usually reliable info (example: 5S95M, 70M30H)
 4. Since the CIGAR string mentioned earlier can't specify SNPs as it will identify them as a match (example: 100M) we will use `Bio.Align.PairwiseAligner` to do the aligning for us and then gather the positions of the snp relative to the reference and relative to the read which will then be put into a class object called `SNP`
