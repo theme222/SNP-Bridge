@@ -5,22 +5,34 @@ import json
 
 
 def display_simulation(size, bridge):  # just a way to plot the results of the simulation
-    y_graph = 0  # A variable determining what the y value for every graph, so it doesn't go on top of each other
+    y_graph = 1 # A variable determining what the y value for every graph, so it doesn't go on top of each other
 
     plt.style.use('seaborn-whitegrid')
-    fig, plot2 = plt.subplots()
-    plot2.set_title(f'Final phase created : {len(bridge)}')
+    fig, plot1 = plt.subplots()
+    plot1.set_title(f'Final phase created : {len(bridge)}')
 
     # plotting baseline
 
-    plot2.plot([0, size], np.full(2, y_graph), 'k-')
-    y_graph += 1
+    ref, =plot1.plot([0, size], np.full(2, 0), 'k-')
 
-    for index, group in enumerate(bridge):
+    _temp = []
+    for group in (bridge):
         color_ = color_gen('name')
+        _temp2 = None
         for read in group:
-            plot2.plot([read.start_pos, read.start_pos + read.size], np.full(2, index + 1), color_)
+            _temp2, = plot1.plot([read.start_pos, read.start_pos + read.size], np.full(2, y_graph), color_)
+        _temp.append(_temp2)
+        y_graph+=1
 
+    snp, = plot1.plot([i.global_start_pos for i in DNA.global_snp], np.full(len(DNA.global_snp), y_graph), 'mx',
+                      label='Type A SNPS')
+    _temp3 = [ref, snp]
+    _temp3.extend(_temp)
+    _temp4 = ['Reference Seq', 'SNPs']
+    _temp4.extend([f"Phase {i}" for i in range(len(_temp3))])
+    plot1.legend(handles=_temp3,
+                 labels=_temp4,
+                 loc=6)
     plt.show()
 
 
@@ -61,7 +73,7 @@ def bridge_strands(shuffled_reads, snplist):  # function independent of simulato
         # checking if the set is empty
         if not bridge_set1 and group1:  # bridge set == []
             bridge_set1.append(group1)
-        elif not bridge_set2 and group2:
+        if not bridge_set2 and group2:
             bridge_set2.append(group2)
 
         if bridge_set1 and bridge_set2:  # precaution for Index Error
@@ -132,64 +144,22 @@ def drill_down(chonky_list):
                         tiny_return_list.append(read)
             return_list.append(tiny_return_list)
 
-    print(return_list)
-    indexes = []
-    len_list = [len(i) for i in return_list]
-    is_break = False
-    for index, group in enumerate(return_list[:-1]):  # checks everything except last
-        for read in group[:len_list[index]]:
-            _temp = []
-            for i, e in enumerate(return_list[index + 1:]):  # checks everything after the thing its checking
-                if read in e:
-                    indexes.append(index)
-                    for r in group:
-                        if r not in e:
-                            _temp.append(r)
-                    e.extend(_temp)
-                    is_break = True
-                    break
-            if is_break:
-                is_break = False
-                break
-
-    multi_delete(return_list, indexes)
     for index, bridge in enumerate(return_list):
         bridge.sort(key=DNA.key)
         return_list[index] = bridge
     return return_list
 
 
-def fasta_writer(groups, samfile, ref,fn):
+def fasta_writer(groups, samfile, ref, fn):
     list_txt = []
     for group in groups:
         text = group[0].read_with_ins
         starter = group[0].start_pos
         for read in group[1:]:
             text = text[:read.start_pos - starter] + read.read_with_ins
-        list_txt.append([text,starter])
+        list_txt.append([text, starter])
     with open(fn, 'w') as fasta_file:
         for index, txt in enumerate(list_txt):
             fasta_file.write(f">SamSplicer.py-{index} Phase output from bridging with {samfile} using reference {ref}"
                              + f" length {len(txt[0])} start-pos {txt[1]} \n")
             fasta_file.write(txt[0] + '\n')
-
-
-def main():
-    with open("config.json") as json_data:
-        configs = json.load(json_data)
-    timer = time()
-    blended_reads, reference = sam_reader("bwa-output.sam", configs["Reference Filename"])
-    DNA.snp_purger(blended_reads)
-    bridge_output = bridge_strands(blended_reads, DNA.global_snp)
-    print(bridge_output)
-    bridge_output = drill_down(bridge_output)
-    log('Results', f'Final bridging simulation with a total of {len(bridge_output)} groups.\n', bridge_output)
-    log('debug', 'Total time to simulate :', time_convert(time() - timer))
-    if input("Show graph? [y/n] : ") == 'y':
-        display_simulation(len(reference), bridge_output)
-    if input("Write to fasta? [y/n] : ") == 'y':
-        fasta_writer(bridge_output, "bwa-output.sam", configs["Reference Filename"],configs['Output Filename'])
-
-
-if __name__ == '__main__':
-    main()

@@ -10,9 +10,9 @@ from random import randint, choice
 from Bio.Align import PairwiseAligner
 import numpy as np
 from collections import Counter
+
+
 # Did you know you could do this? : 😄
-
-
 
 
 def log(logtype, message, var=None):
@@ -169,17 +169,18 @@ def multi_delete(list_, args):
         del list_[index]
     return list_
 
+
 class SNP:
     """ class to store SNP data type containing allele and global position"""
 
     def __init__(self, global_start_pos, local_start_pos=None, values=None):
         self.allele = []
         self.global_start_pos = global_start_pos
-        if local_start_pos is None:
+        if local_start_pos is None:  # used in read.snp
             self.local_start_pos = global_start_pos
         else:
             self.local_start_pos = local_start_pos
-        if values is None:
+        if values is None:  # used in global snp
             self.values = []
         else:
             self.values = values
@@ -247,7 +248,7 @@ class DNA:
         if len(self.insertions) != 0:
             read_with_in = ""
             _temp = 0
-            for index,pos in enumerate(self.insertion_pos):
+            for index, pos in enumerate(self.insertion_pos):
                 read_with_in += "".join(self.read[_temp:pos])
                 read_with_in += self.insertions[index]
                 _temp = pos
@@ -261,8 +262,14 @@ class DNA:
         snp_values = []
         final_snp_list = []
         for index, snp in enumerate(cls.global_snp):
-            for read in read_list:
-                if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size - 1:
+            for index1,read in enumerate(read_list):
+                if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size - 1:  # if snp is in read
+                    # Append the snp to the reads that didn't get detected as snps because it was teh same as the ref
+                    if not snp.snp_checker(read.snp)[0]:
+                        _temp = SNP(snp.global_start_pos)
+                        _temp.local_start_pos = _temp.global_start_pos - read.start_pos
+                        read.snp.append(_temp)
+                        read_list[index1] = read
                     snp_values.append(read.read[snp.global_start_pos - read.start_pos])
 
             # Combine all words together
@@ -285,6 +292,7 @@ class DNA:
     @staticmethod
     def key(read):
         return read.start_pos
+
 
 def sam_aligner(reference, sam_list, sam_start_pos):
     """
@@ -413,12 +421,12 @@ def sam_reader(filename, referencefilename):
         if not sam.cigartuples[0][0] > 2 or sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos)
             reads.append(sam.seq)
-        elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:
-            index_pos.append(sam.pos)
+        elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:  # S/H clips in the front
+            index_pos.append(sam.pos + sam.cigartuples[0][1])
             read = sam.seq
             read = read[sam.cigartuples[0][1]:]
             reads.append(read)
-        elif not sam.cigartuples[0][0] > 2 and sam.cigartuples[-1][0] > 2:
+        elif not sam.cigartuples[0][0] > 2 and sam.cigartuples[-1][0] > 2:  # S/H clips in the back
             index_pos.append(sam.pos)
             read = sam.seq
             read = read[:sam.cigartuples[-1][1] * -1]
@@ -433,10 +441,3 @@ def sam_reader(filename, referencefilename):
 
     return new_reads, reference.seq
 
-def main():
-    log('critical', 'not critical just epic')
-    log('debug', 'Time test thing lol', time_convert(604860.1238349))
-
-
-if __name__ == '__main__':
-    main()

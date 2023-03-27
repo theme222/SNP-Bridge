@@ -100,8 +100,14 @@ class DNA:
         snp_values = []
         final_snp_list = []
         for index, snp in enumerate(cls.global_snp):
-            for read in read_list:
-                if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size - 1:
+            for index1,read in enumerate(read_list):
+                if read.start_pos <= snp.global_start_pos <= read.start_pos + read.size - 1:  # if snp is in read
+                    # Append the snp to the reads that didn't get detected as snps because it was teh same as the ref
+                    if not snp.snp_checker(read.snp)[0]:
+                        _temp = SNP(snp.global_start_pos)
+                        _temp.local_start_pos = _temp.global_start_pos - read.start_pos
+                        read.snp.append(_temp)
+                        read_list[index1] = read
                     snp_values.append(read.read[snp.global_start_pos - read.start_pos])
 
             # Combine all words together
@@ -253,7 +259,7 @@ def sam_reader(filename, referencefilename):
             index_pos.append(sam.pos)
             reads.append(sam.seq)
         elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:
-            index_pos.append(sam.pos)
+            index_pos.append(sam.pos+sam.cigartuples[0][1])
             read = sam.seq
             read = read[sam.cigartuples[0][1]:]
             reads.append(read)
@@ -276,9 +282,7 @@ def sam_reader(filename, referencefilename):
 
 
 def main():
-    new_reads = sam_reader("SamFile.sam", "ReferenceFile.fasta")
-    DNA.snp_purger(new_reads)
-    log("debug", DNA.global_snp)
+    print(reference_reader('ReferenceFile.fasta'))
 
 
 if __name__ == '__main__':

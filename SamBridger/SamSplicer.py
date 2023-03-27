@@ -8,22 +8,34 @@ import json
 
 
 def display_simulation(size, bridge):  # just a way to plot the results of the simulation
-    y_graph = 0  # A variable determining what the y value for every graph, so it doesn't go on top of each other
+    y_graph = 1 # A variable determining what the y value for every graph, so it doesn't go on top of each other
 
     plt.style.use('seaborn-whitegrid')
-    fig, plot2 = plt.subplots()
-    plot2.set_title(f'Final phase created : {len(bridge)}')
+    fig, plot1 = plt.subplots()
+    plot1.set_title(f'Final phase created : {len(bridge)}')
 
     # plotting baseline
 
-    plot2.plot([0, size], np.full(2, y_graph), 'k-')
-    y_graph += 1
+    ref, =plot1.plot([0, size], np.full(2, 0), 'k-')
 
-    for index, group in enumerate(bridge):
+    _temp = []
+    for group in (bridge):
         color_ = color_gen('name')
+        _temp2 = None
         for read in group:
-            plot2.plot([read.start_pos, read.start_pos + read.size], np.full(2, index + 1), color_)
+            _temp2, = plot1.plot([read.start_pos, read.start_pos + read.size], np.full(2, y_graph), color_)
+        _temp.append(_temp2)
+        y_graph+=1
 
+    snp, = plot1.plot([i.global_start_pos for i in DNA.global_snp], np.full(len(DNA.global_snp), y_graph), 'mx',
+                      label='Type A SNPS')
+    _temp3 = [ref, snp]
+    _temp3.extend(_temp)
+    _temp4 = ['Reference Seq', 'SNPs']
+    _temp4.extend([f"Phase {i}" for i in range(len(_temp3))])
+    plot1.legend(handles=_temp3,
+                 labels=_temp4,
+                 loc=6)
     plt.show()
 
 
@@ -64,7 +76,7 @@ def bridge_strands(shuffled_reads, snplist):  # function independent of simulato
         # checking if the set is empty
         if not bridge_set1 and group1:  # bridge set == []
             bridge_set1.append(group1)
-        elif not bridge_set2 and group2:
+        if not bridge_set2 and group2:
             bridge_set2.append(group2)
 
         if bridge_set1 and bridge_set2:  # precaution for Index Error
@@ -134,7 +146,7 @@ def drill_down(chonky_list):
                     if read not in tiny_return_list:
                         tiny_return_list.append(read)
             return_list.append(tiny_return_list)
-
+    '''
     print(return_list)
     indexes = []
     len_list = [len(i) for i in return_list]
@@ -154,8 +166,10 @@ def drill_down(chonky_list):
             if is_break:
                 is_break = False
                 break
-
     multi_delete(return_list, indexes)
+    '''
+
+
     for index, bridge in enumerate(return_list):
         bridge.sort(key=DNA.key)
         return_list[index] = bridge
