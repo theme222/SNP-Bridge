@@ -30,6 +30,9 @@ you can change settings in **config.json** only the config file in the specific 
 ### PhasePipeline 
 **Start.py** using files set in *config.json* to change filetypes through bwa and outputs the final result based on the script in *SamSplicer.py* use this if you are looking for direct from the sequencer information read *README.md* in the directory for more info 
 
+### PhasePipelineMRef 
+MRef stands for Multi Reference which basically means it is able to use multiple references which are stored in the References subdirecrtory
+
 ## How the code works
 I will be describing the inner workings of the Phase Pipeline as it is the most relevant one out of all the projects listed here, and it is a combination of almost all the other directories
 1. After receiving a fastQ file or generating it in FastQ Simulator and getting relevant reference info the code will run the info through bwa 
