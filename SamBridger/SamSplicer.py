@@ -5,10 +5,13 @@ from TechnicalTools import log, time_convert, multi_delete, color_gen
 from time import time
 from SamReader import *
 import json
+from Blaster import blast
+from TechnicalTools import log
+import threading
 
 
 def display_simulation(size, bridge):  # just a way to plot the results of the simulation
-    y_graph = 1 # A variable determining what the y value for every graph, so it doesn't go on top of each other
+    y_graph = 1  # A variable determining what the y value for every graph, so it doesn't go on top of each other
 
     plt.style.use('seaborn-whitegrid')
     fig, plot1 = plt.subplots()
@@ -16,7 +19,7 @@ def display_simulation(size, bridge):  # just a way to plot the results of the s
 
     # plotting baseline
 
-    ref, =plot1.plot([0, size], np.full(2, 0), 'k-')
+    ref, = plot1.plot([0, size], np.full(2, 0), 'k-')
 
     _temp = []
     for group in (bridge):
@@ -25,7 +28,7 @@ def display_simulation(size, bridge):  # just a way to plot the results of the s
         for read in group:
             _temp2, = plot1.plot([read.start_pos, read.start_pos + read.size], np.full(2, y_graph), color_)
         _temp.append(_temp2)
-        y_graph+=1
+        y_graph += 1
 
     snp, = plot1.plot([i.global_start_pos for i in DNA.global_snp], np.full(len(DNA.global_snp), y_graph), 'mx',
                       label='Type A SNPS')
@@ -146,29 +149,6 @@ def drill_down(chonky_list):
                     if read not in tiny_return_list:
                         tiny_return_list.append(read)
             return_list.append(tiny_return_list)
-    '''
-    print(return_list)
-    indexes = []
-    len_list = [len(i) for i in return_list]
-    is_break = False
-    for index, group in enumerate(return_list[:-1]):  # checks everything except last
-        for read in group[:len_list[index]]:
-            _temp = []
-            for i, e in enumerate(return_list[index + 1:]):  # checks everything after the thing its checking
-                if read in e:
-                    indexes.append(index)
-                    for r in group:
-                        if r not in e:
-                            _temp.append(r)
-                    e.extend(_temp)
-                    is_break = True
-                    break
-            if is_break:
-                is_break = False
-                break
-    multi_delete(return_list, indexes)
-    '''
-
 
     for index, bridge in enumerate(return_list):
         bridge.sort(key=DNA.key)
@@ -176,19 +156,39 @@ def drill_down(chonky_list):
     return return_list
 
 
-def fasta_writer(groups, samfile, ref):
+def fasta_maker(groups, samfile, ref,ifblast=True):
+    blast_thread = None
     list_txt = []
     for group in groups:
-        text = group[0].read_with_ins
+        # Gather the insertions in the group
+        insertions = np.array([])
+        for read in group:  # AI code to remove the duplicate insertions
+            insertions = np.append(insertions, read.insertions)
+            _, indices = np.unique([insertion.global_start_pos for insertion in insertions], return_index=True)
+            insertions = insertions[np.sort(indices)[::-1]]  # sort from most to least
+
+        text = group[0].read
         starter = group[0].start_pos
-        for read in group[1:]:
-            text = text[:read.start_pos - starter] + read.read_with_ins
-        list_txt.append([text,starter])
+        for read in group[1:]:  # create read without insertions
+            text = np.append(text[:read.start_pos - starter], read.read)
+        # insert the insertions 😂
+        for ins in insertions:
+            text = np.insert(text, ins.local_start_pos, ins.values)
+
+        list_txt.append(["".join(text), starter])  # sequence, index
+    if ifblast:
+        log('info', 'Beginning Thread')
+        blast_thread = threading.Thread(
+            target=blast,
+            args=([list(zip([seq[0] for seq in list_txt],[f'phase{i}'for i in range(len(list_txt))]))])
+            )
+        blast_thread.start()
     with open("final_output.fasta", 'w') as fasta_file:
         for index, txt in enumerate(list_txt):
             fasta_file.write(f">SamSplicer.py-{index} Phase output from bridging with {samfile} using reference {ref}"
                              + f" length {len(txt[0])} start-pos {txt[1]} \n")
             fasta_file.write(txt[0] + '\n')
+    return blast_thread
 
 
 def main():
@@ -202,10 +202,16 @@ def main():
     bridge_output = drill_down(bridge_output)
     log('Results', f'Final bridging simulation with a total of {len(bridge_output)} groups.\n', bridge_output)
     log('debug', 'Total time to simulate :', time_convert(time() - timer))
+    thread = None
+    if input("Write to fasta? [y/n] : ") == 'y':
+        thread = fasta_maker(bridge_output, configs["Input Sam File"], configs["Reference File"])
     if input("Show graph? [y/n] : ") == 'y':
         display_simulation(len(reference), bridge_output)
-    if input("Write to fasta? [y/n] : ") == 'y':
-        fasta_writer(bridge_output, configs["Input Sam File"], configs["Reference File"])
+    if thread is not None:
+        thread.join()
+
+
+
 
 
 if __name__ == '__main__':
