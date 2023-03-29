@@ -1,5 +1,5 @@
 # Phasing pipeline to start go to > start.py
 ## Settings in config.json
-* "Input filename" name of input file (.sam,.fastq)
+* "Input filename" name of input file (.fastq)
 * "Output filename" name of the output file (fasta)
 * "Output Type" Best / All / Select
