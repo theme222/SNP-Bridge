@@ -154,11 +154,22 @@ def fasta_writer(groups, samfile, ref):
     fn = f'Output/output-{ref}'
     list_txt = []
     for group in groups:
-        text = group[0].read_with_ins
+        # Gather the insertions in the group
+        insertions = np.array([])
+        for read in group:  # AI code to remove the duplicate insertions
+            insertions = np.append(insertions, read.insertions)
+            _, indices = np.unique([insertion.global_start_pos for insertion in insertions], return_index=True)
+            insertions = insertions[np.sort(indices)[::-1]]  # sort from most to least
+
+        text = group[0].read
         starter = group[0].start_pos
-        for read in group[1:]:
-            text = text[:read.start_pos - starter] + read.read_with_ins
-        list_txt.append([text, starter])
+        for read in group[1:]:  # create read without insertions
+            text = np.append(text[:read.start_pos - starter], read.read)
+        # insert the insertions 😂
+        for ins in insertions:
+            text = np.insert(text, ins.local_start_pos, ins.values)
+
+        list_txt.append(["".join(text), starter])  # sequence, index
     with open(fn, 'w') as fasta_file:
         for index, txt in enumerate(list_txt):
             fasta_file.write(f">SamSplicer.py-{index} Phase output from bridging with {samfile} using reference {ref}"

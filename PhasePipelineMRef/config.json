@@ -1,4 +1,5 @@
 {
   "Input Filename" : "input.fastq",
-  "Output Filename" : "output.fasta"
+  "Output Filename" : "output.fasta",
+  "Output Type" : "All"
 }

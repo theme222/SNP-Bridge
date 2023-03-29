@@ -217,16 +217,14 @@ class DNA:
     current_insertid = 1  # keeping track and making sure insert Ids aren't the same
     global_snp = []  # all snps in the current DNA strand
 
-    def __init__(self, read=np.array([], dtype=str), snp=None, start_pos=0, insertions=None, insertion_pos=None):
+    def __init__(self, read=np.array([], dtype=str), snp=None, start_pos=0, insertions=None):
         if snp is None: snp = []
-        if insertion_pos is None:  insertion_pos = np.array([], dtype=int)
-        if insertions is None:  insertions = np.array([], dtype=str)
+        if insertions is None:  insertions = np.array([], dtype=object)
         self.read = read  # Numpy array
         self.snp = snp  # Normal Python list containing SNP objects?
         self.start_pos = start_pos  # Int
         self.insertid = 0  # Int
-        self.insertions = insertions  # list of Char
-        self.insertion_pos = insertion_pos  # list of numbers
+        self.insertions = insertions  # Numpy array of insertion object
 
     def __repr__(self):
         return f'"{self.start_pos}"'
@@ -246,13 +244,11 @@ class DNA:
     @property
     def read_with_ins(self):
         if len(self.insertions) != 0:
-            read_with_in = ""
+            read_with_in = self.read.copy()
             _temp = 0
-            for index, pos in enumerate(self.insertion_pos):
-                read_with_in += "".join(self.read[_temp:pos])
-                read_with_in += self.insertions[index]
-                _temp = pos
-            return read_with_in
+            for index, ins in enumerate(self.insertions):
+                read_with_in = np.insert(read_with_in, ins.local_start_pos, ins.values)
+            return "".join(read_with_in)
         return "".join(self.read)
 
     @classmethod
@@ -292,6 +288,19 @@ class DNA:
     @staticmethod
     def key(read):
         return read.start_pos
+
+
+class Insertion(SNP):
+    def __init__(self, global_insertion_pos=0, local_insert_pos=0, insertion=""):
+        super().__init__(global_insertion_pos, local_insert_pos, values=insertion)
+
+    '''
+    AGTTAGGACAIIIATGATAGCCCAGTAGCA
+              ^^^
+    0123456789
+    local = 10
+    s[:10] = AGTTAGGACA
+    '''
 
 
 def sam_aligner(reference, sam_list, sam_start_pos):
@@ -368,7 +377,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
 
         # finding areas of insertion
         indexes = [i for i, letter in enumerate(target_seq) if letter == "X"]
-        insertions = [query_seq[i] for i in indexes]
+        insertions = [Insertion(ins + start_pos, ins, sam_seq[ins]) for ins in indexes]  # Make list of insertions
 
         # remove insertions from original read
         read = "".join(multi_delete(list(query_seq), indexes))
@@ -384,7 +393,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
         # finding snp positions (i = local | i + start_pos = global)
         for i in range(len(read)):
             if ref[i] != read[i]:
-                print(ref[i], read[i])
+                #  print(ref[i], read[i])
                 snp_list.append(SNP(i + start_pos, i))
                 if not (i + start_pos in snp_compare_list):
                     DNA.global_snp.append(SNP(i + start_pos))
@@ -393,7 +402,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
         # changing to DNA class
         read = np.array(list(read))
 
-        final_sam = DNA(read, snp_list, start_pos, insertions, indexes)
+        final_sam = DNA(read, snp_list, start_pos, np.array(insertions))
         mod_sam_list = np.append(mod_sam_list, final_sam)
 
         snp_list = []
@@ -421,12 +430,12 @@ def sam_reader(filename, referencefilename):
         if not sam.cigartuples[0][0] > 2 or sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos)
             reads.append(sam.seq)
-        elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:  # S/H clips in the front
+        elif sam.cigartuples[0][0] > 2 and not sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos + sam.cigartuples[0][1])
             read = sam.seq
             read = read[sam.cigartuples[0][1]:]
             reads.append(read)
-        elif not sam.cigartuples[0][0] > 2 and sam.cigartuples[-1][0] > 2:  # S/H clips in the back
+        elif not sam.cigartuples[0][0] > 2 and sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos)
             read = sam.seq
             read = read[:sam.cigartuples[-1][1] * -1]
