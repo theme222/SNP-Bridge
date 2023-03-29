@@ -183,7 +183,7 @@ def fasta_maker(groups, samfile, ref,ifblast=True):
             args=([list(zip([seq[0] for seq in list_txt],[f'phase{i}'for i in range(len(list_txt))]))])
             )
         blast_thread.start()
-    with open("final_output.fasta", 'w') as fasta_file:
+    with open("Output/final_output.fasta", 'w') as fasta_file:
         for index, txt in enumerate(list_txt):
             fasta_file.write(f">SamSplicer.py-{index} Phase output from bridging with {samfile} using reference {ref}"
                              + f" length {len(txt[0])} start-pos {txt[1]} \n")
