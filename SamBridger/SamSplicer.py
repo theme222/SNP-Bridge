@@ -195,6 +195,8 @@ def main():
     with open("config.json") as json_data:
         configs = json.load(json_data)
     timer = time()
+    remove_unaligned_reads(configs["Input Sam File"], configs["Input Sam File"]+'removed.sam')
+    configs["Input Sam File"] = configs["Input Sam File"]+'.removed.sam'
     blended_reads, reference = sam_reader(configs["Input Sam File"], configs["Reference File"])
     DNA.snp_purger(blended_reads)
     bridge_output = bridge_strands(blended_reads, DNA.global_snp)
@@ -209,9 +211,6 @@ def main():
         display_simulation(len(reference), bridge_output)
     if thread is not None:
         thread.join()
-
-
-
 
 
 if __name__ == '__main__':

@@ -4,6 +4,9 @@ from helperfile import *
 import json
 
 
+
+
+
 def display_simulation(size, bridge):  # just a way to plot the results of the simulation
     y_graph = 1 # A variable determining what the y value for every graph, so it doesn't go on top of each other
 

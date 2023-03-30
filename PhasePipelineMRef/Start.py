@@ -46,9 +46,11 @@ def main():
             log("debug", "Activating BWA")
             os.system(f"bwa index {current_reference_filename}")
             os.system(f"bwa mem {current_reference_filename} {configs['Input Filename']} > bwa-output.sam")
+            # Removing any reads that aren't aligned
+            remove_unaligned_reads("bwa-output.sam", "bwa-removed-output.sam")
             log("debug", "Running bridger")
             timer = time()
-            blended_reads, reference = sam_reader("bwa-output.sam", current_reference_filename)
+            blended_reads, reference = sam_reader("bwa-removed-output.sam", current_reference_filename)
             DNA.snp_purger(blended_reads)
             bridge_output = bridge_strands(blended_reads, DNA.global_snp)
             print(bridge_output)
@@ -78,7 +80,7 @@ def main():
                 os.remove(f"{current_reference_filename}.pac")
                 os.remove(f"{current_reference_filename}.sa")
                 os.remove(f"{current_reference_filename}")
-                os.remove("bwa-output.sam")
+                os.remove("bwa-removed-output.sam")
             except FileNotFoundError:
                 log("error", "File not found")
 

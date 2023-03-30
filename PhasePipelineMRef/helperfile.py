@@ -326,7 +326,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
         sam_seq = sam[0]
 
         # making reference that is slightly bigger that target sequence, so it can account for ins/del
-        seq1 = reference[start_pos:start_pos + len(sam_seq) + 20]
+        seq1 = reference[start_pos:start_pos + len(sam_seq) + 50]
 
         seq2 = sam_seq  # sam sequence
 
@@ -375,13 +375,7 @@ def sam_aligner(reference, sam_list, sam_start_pos):
 
         # =========== AI code exiting ===========
 
-        # finding areas of insertion
-        indexes = [i for i, letter in enumerate(target_seq) if letter == "X"]
-        insertions = [Insertion(ins + start_pos, ins, sam_seq[ins]) for ins in indexes]  # Make list of insertions
-
-        # remove insertions from original read
-        read = "".join(multi_delete(list(query_seq), indexes))
-
+        read = query_seq
         # remove any trailing Xs
         for i in range(len(read) - 1, 0, -1):
             if not (read[i] == 'X' or (read[i] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])):
@@ -389,23 +383,30 @@ def sam_aligner(reference, sam_list, sam_start_pos):
                 break
 
         ref = seq1[:len(read)]
+        # finding areas of insertion
+        indexes = [i for i, letter in enumerate(ref) if letter == "X"]
+        insertions = [Insertion(ins + start_pos, ins, sam_seq[ins]) for ins in indexes]  # Make list of insertions
 
+        # remove insertions from original read
+        read = "".join(multi_delete(list(read), indexes))
+        print(len(ref),len(read))
         # finding snp positions (i = local | i + start_pos = global)
-        for i in range(len(read)):
-            if ref[i] != read[i]:
-                #  print(ref[i], read[i])
-                snp_list.append(SNP(i + start_pos, i))
-                if not (i + start_pos in snp_compare_list):
-                    DNA.global_snp.append(SNP(i + start_pos))
-                    snp_compare_list.append(i + start_pos)
+        if len(ref) == len(read):
+            for i in range(len(read)):
+                if ref[i] != read[i]:
+                    #  print(ref[i], read[i])
+                    snp_list.append(SNP(i + start_pos, i))
+                    if not (i + start_pos in snp_compare_list):
+                        DNA.global_snp.append(SNP(i + start_pos))
+                        snp_compare_list.append(i + start_pos)
 
-        # changing to DNA class
-        read = np.array(list(read))
+            # changing to DNA class
+            read = np.array(list(read))
 
-        final_sam = DNA(read, snp_list, start_pos, np.array(insertions))
-        mod_sam_list = np.append(mod_sam_list, final_sam)
+            final_sam = DNA(read, snp_list, start_pos, np.array(insertions))
+            mod_sam_list = np.append(mod_sam_list, final_sam)
 
-        snp_list = []
+            snp_list = []
 
     return mod_sam_list
 
@@ -425,8 +426,9 @@ def sam_reader(filename, referencefilename):
     index_pos = []
     reads = []
 
-    for sam in samfile.fetch():
+    for sam in (samfile.fetch()):
         # cutting the reads that have soft clips and hard clips out
+        print(sam.cigartuples)
         if not sam.cigartuples[0][0] > 2 or sam.cigartuples[-1][0] > 2:
             index_pos.append(sam.pos)
             reads.append(sam.seq)
@@ -449,3 +451,12 @@ def sam_reader(filename, referencefilename):
     new_reads = sam_aligner(reference.seq, reads, index_pos)
 
     return new_reads, reference.seq
+
+
+def remove_unaligned_reads(input_file, output_file):
+    with pysam.AlignmentFile(input_file, "r") as input_sam, \
+            pysam.AlignmentFile(output_file, "w", template=input_sam) as output_sam:
+        for read in input_sam:
+            if read.cigartuples is not None:
+                output_sam.write(read)
+    os.remove(input_file)
