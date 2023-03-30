@@ -33,6 +33,10 @@ you can change settings in **config.json** only the config file in the specific 
 ### PhasePipelineMRef 
 MRef stands for Multi Reference which basically means it is able to use multiple references which are stored in the References subdirecrtory
 
+### Blast Reader
+**BlastOutputReader.py** Will use a fasta file as input and will BLAST using `Bio.Blast.NCBIWWW.qblast` to recieve information on the HLA type and output a list of medicines that you will have an adverse drug reaction to based on the csv file in the directory
+
+
 ## How the code works
 I will be describing the inner workings of the Phase Pipeline as it is the most relevant one out of all the projects listed here, and it is a combination of almost all the other directories
 1. After receiving a fastQ file or generating it in FastQ Simulator and getting relevant reference info the code will run the info through bwa 
