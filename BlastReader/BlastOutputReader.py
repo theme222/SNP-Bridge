@@ -1,5 +1,3 @@
-import os
-import re
 import pandas as pd
 from Bio.Blast.NCBIWWW import qblast
 from TechnicalTools import log, time_convert
@@ -24,7 +22,7 @@ def blast(seq):
                         _temp = tiny_string
                         if ':' in _temp:
                             final = ''
-                            final += _temp.split(':')[0] + ':' + _temp.split(':')[1][:2]
+                            final += _temp.split(':')[0] + ':' + _temp.split(':')[1]
                             titles.append(final)
         return set(titles)
     except KeyboardInterrupt:
@@ -63,6 +61,7 @@ def main():
     fasta_seq = reference_reader('ADRFastA.fasta').seq
     log('info', 'Blasting ...')
     infos = blast(fasta_seq)
+    print(infos)
     data = read_csv('HLA-ADR - hla_adr.csv')
     find_in_dict(infos,data)
 
