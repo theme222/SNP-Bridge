@@ -1,5 +1,10 @@
 # DNA read simulation and bridging
 
+## Getting started
+please note that there may be a couple kinks to review currently and may not be in the most perfect condition but for now try downloading the code and going through the SamBridger subdirectory, within this you can look through the **config.json** and running the **SamSplicer.py** this part requires you to turn the fastq file into a sam file already through bwa note : if you don't have a fastq file ready you can simulate one in the FastQSimulator subdirectory 
+
+
+
 ## Configurations
 you can change settings in **config.json** only the config file in the specific directory would determine the settings for the main python file 
 ### Definitions
